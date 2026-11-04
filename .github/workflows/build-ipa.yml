@@ -1,6 +1,6 @@
 # GitHub Actions の macOS ランナーで未署名の IPA をビルドする。
-# 手元の Mac（macOS 12 / Xcode 14.2 が上限）では iOS 27 の iPhone に入れられないため、
-# ビルドはここで行い、できた IPA を Sideloadly / AltStore で署名してインストールする。
+# 開発は Windows で行っていて手元に Xcode がないため、ビルドはすべてここで行う。
+# できた IPA は Sideloadly で署名して iPhone にインストールする（手順は README）。
 name: Build IPA
 
 on:

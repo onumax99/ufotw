@@ -15,7 +15,7 @@ SwiftUI と CoreBluetooth だけで作った、U.F.O. TW をスマホから操�
 
 - GitHub のアカウント（ビルドは GitHub Actions の macOS ランナーで行うので、手元に Mac も Xcode も不要。Windows でも Mac でも同じ）
 - 実機の iPhone（iOS 16 以降。シミュレータは Bluetooth を使えません）
-- Apple ID（無料でも実機に入れられますが、7 日ごとに入れ直しが必要。有料の Developer Program なら TestFlight で 90 日有効）
+- Apple ID（無料でも実機に入れられますが、7 日ごとに入れ直しが必要。有料の Developer Program の Apple ID で署名すれば 1 年間有効）
 - Sideloadly（https://sideloadly.io/ ）。Windows の場合は Apple 公式サイト版の iTunes も必要
 
 ## セットアップ（GitHub Actions でビルドして Sideloadly で入れる・現在の運用）
@@ -32,14 +32,17 @@ SwiftUI と CoreBluetooth だけで作った、U.F.O. TW をスマホから操�
 2. GitHub の **Actions** → 該当の実行 → **Artifacts** から `UFOController-unsigned-ipa` をダウンロードして zip を展開し、中の `.ipa` を取り出す
 3. Sideloadly を起動し、iPhone を USB でつなぐ
 4. Sideloadly に `.ipa` をドラッグ → **iDevice** に自分の iPhone が出ていることを確認 → **Apple account** に Apple ID を入れて **Start**（パスワードは Apple に直接送られる。2 ファクタ認証のコードを聞かれたら iPhone に出た番号を入れる）
-5. 初回は iPhone の「設定 → 一般 → VPN とデバイス管理」で開発元（自分の Apple ID）を信頼する
+5. 初回だけ iPhone で次の 2 つを行う
+   - 「設定 → プライバシーとセキュリティ → デベロッパモード」をオンにして再起動し、再起動後の確認で「オンにする」を選ぶ（iOS 16 以降で必要。この項目はサイドロードしたアプリを入れた後に表示される）
+   - 「設定 → 一般 → VPN とデバイス管理」で開発元（自分の Apple ID）を信頼する
 
 - 無料の Apple ID で署名したアプリは **7 日で起動できなくなる** ので、期限が来たら同じ IPA をもう一度 Sideloadly で入れ直す（データは残る）
 - 無料の Apple ID は同時に 3 本までしかアプリを入れられない。ほかにもサイドロードしている場合は注意
-- 有料の Apple Developer Program（年 99 ドル）に入ると、同じワークフローから TestFlight に上げて 90 日有効にできる
+- 有料の Apple Developer Program（年 99 ドル）の Apple ID で Sideloadly から署名すると 1 年間有効になり、入れ直しの手間が減る（TestFlight で配る仕組みはワークフローにはまだない）
 
 ### 動かなかったときに見るところ
 
+- アプリを開くと「デベロッパモードが必要」「信頼されていないデベロッパ」と出る: 上の手順 5 の 2 つが済んでいるか
 - Sideloadly でエラーが出る: iTunes が公式サイト版か、iPhone が iTunes に見えているか、Apple ID のパスワード（アプリ用パスワードではなく通常のもの）か
 - アプリは入ったが接続できない: iPhone の設定でこのアプリの Bluetooth が許可されているか、U.F.O. TW がクレードルから外れて電源が入っているか、他のアプリ・PC とつながっていないか
 - 送っているバイト列はアプリ画面の「出力 → 送信データ」に出る（停止時は `05 80 80`）
