@@ -13,24 +13,40 @@ SwiftUI と CoreBluetooth だけで作った、U.F.O. TW をスマホから操�
 
 ## 必要なもの
 
-- Mac と Xcode 14.2 以降（対象は iOS 16 以降の iPhone）。macOS 12 の Mac では Xcode 14.2 が上限で、App Store には出てこないため https://developer.apple.com/download/all/ から `Xcode_14.2.xip` をダウンロードする
-- 実機の iPhone（シミュレータは Bluetooth を使えません）
-- Apple ID（無料でも実機に入れられますが、7 日ごとに入れ直しが必要。有料の Developer Program なら 1 年間有効）
+- GitHub のアカウント（ビルドは GitHub Actions の macOS ランナーで行うので、手元に Mac も Xcode も不要。Windows でも Mac でも同じ）
+- 実機の iPhone（iOS 16 以降。シミュレータは Bluetooth を使えません）
+- Apple ID（無料でも実機に入れられますが、7 日ごとに入れ直しが必要。有料の Developer Program なら TestFlight で 90 日有効）
+- Sideloadly（https://sideloadly.io/ ）。Windows の場合は Apple 公式サイト版の iTunes も必要
 
-## セットアップ（GitHub Actions でビルドして Sideloadly で入れる方法・現在の運用）
+## セットアップ（GitHub Actions でビルドして Sideloadly で入れる・現在の運用）
 
-手元の Mac が古くて Xcode から iPhone に入れられない場合の手順です。Xcode は不要で、Windows でも同じ手順で動きます。
+### 最初に 1 回だけ（Windows）
+
+1. https://www.apple.com/itunes/ から **Apple 公式サイト版の iTunes** を入れる（Microsoft Store 版は Sideloadly が認識しないことがある）
+2. https://sideloadly.io/ から Windows 版 Sideloadly を入れる
+3. iPhone を USB でつなぎ、iPhone 側で「このコンピュータを信頼」を押す。iTunes に iPhone が表示されれば準備完了（iTunes 自体は閉じてよい）
+
+### ビルドしてインストールする
 
 1. GitHub に push すると `.github/workflows/build-ipa.yml` が走り、未署名の IPA ができます（main への push と、Actions 画面の **Run workflow** で実行）
 2. GitHub の **Actions** → 該当の実行 → **Artifacts** から `UFOController-unsigned-ipa` をダウンロードして zip を展開し、中の `.ipa` を取り出す
-3. https://sideloadly.io/ から Sideloadly を入れる（Mac は公式サイト版、Windows は Apple 公式サイト版の iTunes も必要）
-4. iPhone を USB でつなぎ、Sideloadly に `.ipa` をドラッグ → 自分の Apple ID を入れて **Start**
-5. 初回は iPhone の「設定 → 一般 → VPN とデバイス管理」で開発元を信頼する
+3. Sideloadly を起動し、iPhone を USB でつなぐ
+4. Sideloadly に `.ipa` をドラッグ → **iDevice** に自分の iPhone が出ていることを確認 → **Apple account** に Apple ID を入れて **Start**（パスワードは Apple に直接送られる。2 ファクタ認証のコードを聞かれたら iPhone に出た番号を入れる）
+5. 初回は iPhone の「設定 → 一般 → VPN とデバイス管理」で開発元（自分の Apple ID）を信頼する
 
 - 無料の Apple ID で署名したアプリは **7 日で起動できなくなる** ので、期限が来たら同じ IPA をもう一度 Sideloadly で入れ直す（データは残る）
+- 無料の Apple ID は同時に 3 本までしかアプリを入れられない。ほかにもサイドロードしている場合は注意
 - 有料の Apple Developer Program（年 99 ドル）に入ると、同じワークフローから TestFlight に上げて 90 日有効にできる
 
-## セットアップ（Xcode 14.2 以降がある Mac で直接入れる方法）
+### 動かなかったときに見るところ
+
+- Sideloadly でエラーが出る: iTunes が公式サイト版か、iPhone が iTunes に見えているか、Apple ID のパスワード（アプリ用パスワードではなく通常のもの）か
+- アプリは入ったが接続できない: iPhone の設定でこのアプリの Bluetooth が許可されているか、U.F.O. TW がクレードルから外れて電源が入っているか、他のアプリ・PC とつながっていないか
+- 送っているバイト列はアプリ画面の「出力 → 送信データ」に出る（停止時は `05 80 80`）
+
+## セットアップ（Xcode がある Mac で直接入れる方法・現在は使っていない）
+
+Mac で Xcode が使える場合のみ。iOS 27 の iPhone に入れるには Xcode 26 以降が必要です。
 
 ```sh
 # Homebrew が未インストールなら https://brew.sh の手順で先に入れる

@@ -4,30 +4,30 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）を iPhone 
 
 ## 現在の状態
 
-- 2026-11-05 時点で、GitHub Actions（macos-latest）での iOS ビルドが成功し、未署名 IPA が Artifacts に出ることを確認済み。手元の Swift 5.7.2 + macOS 13.1 SDK での `swiftc -typecheck` も通る。**実機確認はまだ**。
+- **開発環境は Windows PC**（2026-11-05 に移行）。手元に Xcode も Swift コンパイラもないので、**ビルドはすべて GitHub Actions で行う**。コンパイルエラーは push して Actions の結果を見るまで分からない。
 - リポジトリは https://github.com/onumax99/ufotw （Public）。Public なので macOS ランナーの利用に上限はない。
+- 2026-11-05 時点で GitHub Actions（macos-latest）での iOS ビルドが成功し、未署名 IPA が Artifacts に出ることを確認済み（ビルド #1）。**実機確認はまだ**。
 - 送信するバイト列は buttplug のテストデータと一致することを確認済み（下記「プロトコル」）。
 - 実機での動作確認はまだ。特に「正転」が実際にどちら向きかは未確認。
-- 開発機は Intel Mac（x86_64）、**macOS 12.7.6**。この macOS に入る Xcode は最大 **14.2**（Swift 5.7 / iOS 16.2 SDK）。そのため deployment target は iOS 16.0 にしてあり、iOS 17 以降専用の API（`onChange(of:) { old, new in }` の 2 引数形式、`@Observable` など）は使わない。
-- 開発機には 2026-11-05 時点で Xcode・Homebrew・xcodegen のどれも入っていない（`/Library/Developer/CommandLineTools` のみ）。Xcode 14.2 は App Store には出てこないので https://developer.apple.com/download/all/ から `Xcode_14.2.xip` を取ってくる必要がある。
-- 開発機は MacBook Pro 13 インチ 2016（MacBookPro13,2）で、対応する macOS の上限が 12 Monterey。つまり **この Mac では Xcode 14.2 が最終**で、それ以上には上げられない。
-- 対象の iPhone は **iOS 27.0.1**（2026-11-05 時点）。Xcode 14.2 からは実機に入れられない（iOS 17 以降は実機接続の仕組みが CoreDevice に変わり、DeviceSupport のコピーでは対応不可）。実機に入れる手段は **GitHub Actions で未署名 IPA をビルドし、この Mac から Sideloadly で署名してインストール** に決定（2026-11-05）。ワークフローは `.github/workflows/build-ipa.yml`、手順は README 参照。App Store 公開は審査（アダルト機器・他社商標）で通る見込みが低いので予定なし。
+- 対象の iPhone は **iOS 27.0.1**（2026-11-05 時点）。実機に入れる手段は **GitHub Actions で未署名 IPA をビルドし、Windows の Sideloadly で署名してインストール** に決定。手順は README 参照。App Store 公開は審査（アダルト機器・他社商標）で通る見込みが低いので予定なし。
+- deployment target は iOS 16.0。iOS 17 以降専用の API（`onChange(of:) { old, new in }` の 2 引数形式、`@Observable` など）は使わない。Swift 5 モード。
+- 以前の開発機だった MacBook Pro 2016（macOS 12.7.6、Xcode 14.2 が上限、iOS 27 の実機には入れられない）はもう使わない。Mac で作業する場合の手順は README の末尾に残してある。
 
-## ビルド
+## ビルドと動作確認（Windows）
 
-```sh
-brew install xcodegen   # 初回のみ
-xcodegen                # project.yml から UFOController.xcodeproj を生成
-open UFOController.xcodeproj
-```
+1. `Sources/` を編集して main に push する（または Actions 画面の **Run workflow**）。`.github/workflows/build-ipa.yml` が走る。
+2. https://github.com/onumax99/ufotw/actions で結果を見る。失敗したらジョブのログ（サインインが必要）の「署名なしでビルド」ステップにコンパイルエラーが出る。
+3. 成功したら Artifacts の `UFOController-unsigned-ipa`（zip）を取り、中の `.ipa` を Sideloadly で iPhone に入れる。
 
-- `.xcodeproj` は生成物で git 管理外。ビルド設定・Info.plist の項目は **project.yml** に書く（Xcode 上で変えた設定は `xcodegen` 再実行で消える）。
-- ファイルを追加・削除したら `xcodegen` を再実行する。
-- 署名チームは project.yml の `DEVELOPMENT_TEAM` に入れておくと消えない。
-- コマンドラインでの型チェック例: `xcodebuild -scheme UFOController -destination 'generic/platform=iOS' -configuration Debug build CODE_SIGNING_ALLOWED=NO`
-- Xcode なしでの簡易チェック（macOS SDK を iOS 16 相当の代わりに使う。UIKit 依存を増やすと使えなくなる）:
-  `swiftc -typecheck -sdk "$(xcrun --sdk macosx --show-sdk-path)" -target x86_64-apple-macos13.0 -swift-version 5 Sources/*.swift`
+- Claude Code からは、ログインしていない状態では Actions のログは読めない。ジョブの成否とステップ一覧は公開 API で取れる:
+  `curl -s https://api.github.com/repos/onumax99/ufotw/actions/runs?per_page=3` → run の `id`、`status`、`conclusion`。
+  エラー内容が必要なときはユーザーにログの該当部分を貼ってもらう。
+- 1 回のビルドは 1 分弱。細かく push して確かめてよい。
+- `.xcodeproj` は CI 上で project.yml から生成するので git 管理外。ビルド設定・Info.plist の項目は **project.yml** に書く。
+- ファイルを追加・削除しても `sources: - Sources` でディレクトリごと拾うので、project.yml の変更は不要。
+- Swift ファイルは LF 改行で保存する（`.gitattributes` で強制済み）。文字コードは UTF-8。
 - BLE を使うのでシミュレータでは接続まで試せない。動作確認は実機で。
+- iPhone のログを Windows で見たいときは iMazing か 3uTools、または libimobiledevice の `idevicesyslog`。まずはアプリ画面の「送信データ」欄で足りるはず。
 
 ## ファイル構成
 

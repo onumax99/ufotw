@@ -1,0 +1,2 @@
+# Swift / YAML は改行コードを LF に固定（Windows で編集しても CRLF にならないように）
+* text=auto eol=lf
