@@ -1,0 +1,56 @@
+# GitHub Actions の macOS ランナーで未署名の IPA をビルドする。
+# 手元の Mac（macOS 12 / Xcode 14.2 が上限）では iOS 27 の iPhone に入れられないため、
+# ビルドはここで行い、できた IPA を Sideloadly / AltStore で署名してインストールする。
+name: Build IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode のバージョンを表示
+        run: xcodebuild -version
+
+      - name: XcodeGen をインストール
+        run: brew install xcodegen
+
+      - name: project.yml から .xcodeproj を生成
+        run: xcodegen generate
+
+      - name: 署名なしでビルド
+        run: |
+          xcodebuild \
+            -project UFOController.xcodeproj \
+            -scheme UFOController \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            build
+
+      - name: IPA に固める
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name '*.app' | head -n 1)
+          test -n "$APP"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qr "UFOController-unsigned-${{ github.run_number }}.ipa" Payload
+          ls -la *.ipa
+
+      - name: IPA をアーティファクトとして保存
+        uses: actions/upload-artifact@v4
+        with:
+          name: UFOController-unsigned-ipa
+          path: "*.ipa"
+          retention-days: 30

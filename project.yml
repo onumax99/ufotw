@@ -1,0 +1,32 @@
+# XcodeGen 用の設定。`xcodegen` を実行すると UFOController.xcodeproj が生成されます。
+# .xcodeproj は生成物なので直接編集せず、設定はこのファイルに書いてください。
+name: UFOController
+options:
+  bundleIdPrefix: jp.oyuki
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Xcode 26 以降の既定（MainActor）だと ObservableObject 周りで並行性エラーになるので明示する。古い Xcode では無視される
+    SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+targets:
+  UFOController:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: jp.oyuki.ufotw
+        CODE_SIGN_STYLE: Automatic
+        # Apple ID のチーム ID（10 文字）を入れておくと、xcodegen を再実行しても署名設定が消えません
+        DEVELOPMENT_TEAM: ""
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: "UFO TW"
+        INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription: "U.F.O. TW と Bluetooth で接続して操作するために使用します。"
+        INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait

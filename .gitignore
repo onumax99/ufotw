@@ -1,0 +1,14 @@
+# XcodeGen で project.yml から生成するので管理しない
+*.xcodeproj/
+
+# Xcode
+xcuserdata/
+DerivedData/
+build/
+*.ipa
+
+# macOS
+.DS_Store
+
+# CI で IPA を固めるときの作業ディレクトリ
+Payload/
