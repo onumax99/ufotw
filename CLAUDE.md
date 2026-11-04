@@ -4,7 +4,8 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）を iPhone 
 
 ## 現在の状態
 
-- 2026-11-05 時点で、コマンドラインツールの Swift 5.7.2 + macOS 13.1 SDK（Xcode 14.2 と同世代）で `swiftc -typecheck` が通ることを確認済み。**Xcode での iOS ビルドと実機確認はまだ**。
+- 2026-11-05 時点で、GitHub Actions（macos-latest）での iOS ビルドが成功し、未署名 IPA が Artifacts に出ることを確認済み。手元の Swift 5.7.2 + macOS 13.1 SDK での `swiftc -typecheck` も通る。**実機確認はまだ**。
+- リポジトリは https://github.com/onumax99/ufotw （Public）。Public なので macOS ランナーの利用に上限はない。
 - 送信するバイト列は buttplug のテストデータと一致することを確認済み（下記「プロトコル」）。
 - 実機での動作確認はまだ。特に「正転」が実際にどちら向きかは未確認。
 - 開発機は Intel Mac（x86_64）、**macOS 12.7.6**。この macOS に入る Xcode は最大 **14.2**（Swift 5.7 / iOS 16.2 SDK）。そのため deployment target は iOS 16.0 にしてあり、iOS 17 以降専用の API（`onChange(of:) { old, new in }` の 2 引数形式、`@Observable` など）は使わない。
