@@ -3,7 +3,7 @@
 import { UFODevice, UNSUPPORTED_TEXT } from './device.js';
 import { ControlModel, PATTERNS } from './control.js';
 import { speedLabel } from './protocol.js';
-import { parseVorzeCsv, valueAt, activeRange, formatTime } from './csv.js';
+import { createPlayer } from './player.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -20,76 +20,9 @@ if (new URLSearchParams(location.search).has('mock')) {
 const device = new UFODevice(bluetooth);
 const model = new ControlModel(device);
 
-// ---- 音声同期: 再生中の音声（動画）の再生位置で CSV を引く ----
-
-const audio = $('audio');
-const video = $('video');
-const sync = {
-  media: null, // 今使っている <audio> か <video>
-  mediaUrl: null,
-  mediaName: '',
-  csvName: '',
-  events: null,
-  csvNote: '', // 読めなかった行の数など
-  csvError: '',
-  mediaError: '',
-};
-
-model.setSyncSource(() => {
-  const media = sync.media;
-  if (!sync.events || !media || media.paused || media.ended) return [0, 0];
-  return valueAt(sync.events, media.currentTime + model.syncOffset);
-});
-
-function pauseMedia() {
-  if (sync.media && !sync.media.paused) sync.media.pause();
-}
-
-function loadMedia(file) {
-  pauseMedia();
-  if (sync.mediaUrl) URL.revokeObjectURL(sync.mediaUrl);
-  const isVideo = file.type.startsWith('video/') || /\.(mp4|m4v|mov|webm)$/i.test(file.name);
-  const [use, other] = isVideo ? [video, audio] : [audio, video];
-  other.removeAttribute('src');
-  other.load();
-  other.hidden = true;
-
-  sync.mediaUrl = URL.createObjectURL(file);
-  sync.media = use;
-  sync.mediaName = file.name;
-  sync.mediaError = '';
-  use.src = sync.mediaUrl;
-  use.hidden = false;
-  use.load();
-  renderSync();
-}
-
-async function loadCsv(file) {
-  pauseMedia();
-  sync.csvName = file.name;
-  try {
-    const { events, skipped } = parseVorzeCsv(await file.text());
-    sync.events = events;
-    sync.csvNote = skipped ? `読めなかった ${skipped} 行は飛ばしました。` : '';
-    sync.csvError = '';
-  } catch (e) {
-    sync.events = null;
-    sync.csvNote = '';
-    sync.csvError = e.message;
-  }
-  renderSync();
-}
-
-for (const media of [audio, video]) {
-  for (const type of ['loadedmetadata', 'play', 'pause', 'ended']) media.addEventListener(type, renderSync);
-  // 一時停止・シーク・終了はすぐ本体に反映する（次の周期を待たない）
-  for (const type of ['pause', 'seeked', 'ended']) media.addEventListener(type, () => model.tick());
-  media.addEventListener('error', () => {
-    if (media !== sync.media || !media.getAttribute('src')) return;
-    sync.mediaError = 'このファイルは再生できませんでした。';
-    renderSync();
-  });
-}
+// 音声同期（プレイリスト・連続再生）は player.js
+const player = createPlayer({ model, device });
+const pauseMedia = () => player.pause();
 
 /** 停止ボタン・Esc・画面が隠れたとき: 音声も止めてから本体を止める */
 function stopEverything() {
@@ -97,7 +30,7 @@ function stopEverything() {
   model.emergencyStop();
 }
 
-window.ufo = { device, model, sync, loadMedia, loadCsv }; // デバッグ用
+window.ufo = { device, model, player }; // デバッグ用
 
 // ---- パターンの種類ボタンを作る ----
 
@@ -140,16 +73,6 @@ $('period').addEventListener('input', (e) => model.setPeriod(e.target.value));
 $('mirror').addEventListener('change', (e) => model.setMirror(e.target.checked));
 $('play-btn').addEventListener('click', () => model.togglePlay());
 
-$('media-file').addEventListener('change', (e) => {
-  const [file] = e.target.files;
-  if (file) loadMedia(file);
-  e.target.value = ''; // 同じファイルを選び直せるように
-});
-$('csv-file').addEventListener('change', (e) => {
-  const [file] = e.target.files;
-  if (file) loadCsv(file);
-  e.target.value = '';
-});
 $('offset').addEventListener('input', (e) => model.setSyncOffset(e.target.value));
 
 $('stop-btn').addEventListener('click', stopEverything);
@@ -278,44 +201,6 @@ function renderModel() {
       : `${offset} 秒${model.syncOffset > 0 ? '早く' : '遅く'}`;
 }
 
-function renderSync() {
-  $('media-name').textContent = sync.mediaName || '未選択';
-  $('media-name').dataset.selected = String(Boolean(sync.mediaName));
-  $('csv-name').textContent = sync.csvName || '未選択';
-  $('csv-name').dataset.selected = String(Boolean(sync.csvName && sync.events));
-
-  // CSV の中身の要約。動きの範囲が音声より長ければ、組み合わせ違いかもしれないので知らせる
-  const info = $('csv-info');
-  if (sync.events) {
-    const range = activeRange(sync.events);
-    const parts = [`${sync.events.length} 行`];
-    parts.push(range ? `動きがあるのは ${formatTime(range.start)}〜${formatTime(range.end)}` : '動きのある行がありません');
-    const duration = sync.media?.duration;
-    if (range && Number.isFinite(duration) && range.start > duration) {
-      parts.push(`音声（${formatTime(duration)}）より後なので動きません`);
-    } else if (range && Number.isFinite(duration) && range.end > duration + 1) {
-      parts.push(`音声（${formatTime(duration)}）より長いです`);
-    }
-    info.textContent = `${parts.join('・')}。${sync.csvNote}`;
-    info.hidden = false;
-  } else {
-    info.hidden = true;
-  }
-
-  const message = $('sync-message');
-  const error = sync.csvError || sync.mediaError;
-  const note = error
-    ? { text: error, level: 'error' }
-    : sync.media && !sync.media.paused && !device.isConnected
-      ? { text: '未接続なので、本体は動きません。', level: 'info' }
-      : sync.media && !sync.events
-        ? { text: 'CSV を選ぶと、音声に合わせて動きます。', level: 'info' }
-        : null;
-  message.hidden = !note;
-  message.textContent = note?.text ?? '';
-  message.dataset.level = note?.level ?? '';
-}
-
 function renderOutput() {
   $('out-left').textContent = speedLabel(model.outLeft);
   $('out-right').textContent = speedLabel(model.outRight);
@@ -340,12 +225,10 @@ function setRange(input, value) {
 
 device.addEventListener('change', renderDevice);
 device.addEventListener('statechange', updateWakeLock);
-device.addEventListener('statechange', renderSync);
 model.addEventListener('change', renderModel);
 model.addEventListener('output', renderOutput);
 
 renderDevice();
 renderModel();
 renderOutput();
-renderSync();
 model.start();

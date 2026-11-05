@@ -45,6 +45,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # GitHub Pages は JS を最大 10 分キャッシュさせるので、公開直後に新旧の JS が混ざると
+      # import の食い違いで読み込みに失敗する。公開のたびに JS・CSS の URL へ版（コミット）を付けて防ぐ。
+      - name: JS・CSS の URL に版を付ける
+        run: |
+          v="${GITHUB_SHA::8}"
+          sed -i -E "s#(from '\./[A-Za-z0-9_-]+\.js)'#\1?v=$v'#g; s#(import\('\./[A-Za-z0-9_-]+\.js)'\)#\1?v=$v')#g" web/js/*.js
+          sed -i -E "s#(src=\"js/app\.js)\"#\1?v=$v\"#; s#(href=\"style\.css)\"#\1?v=$v\"#" web/index.html
+          if grep -nE "(from |import\()'\./[^'?]+'" web/js/*.js; then
+            echo "::error::版の付いていない import が残っています"
+            exit 1
+          fi
+          grep -c "?v=$v" web/index.html web/js/*.js
+
       - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v5

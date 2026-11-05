@@ -480,24 +480,165 @@ input[type="range"]:focus-visible {
   outline-offset: 2px;
 }
 
-.file-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.file-name[data-selected="true"] {
-  color: var(--text);
+.file-btn.disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .media {
   display: block;
   width: 100%;
-  margin: 10px 0 4px;
+  margin: 0 0 8px;
+}
+
+/* ---- プレイリスト ---- */
+
+.tracks {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.track {
+  border-bottom: 1px solid var(--line);
+  padding: 6px 0 8px;
+}
+
+.track[aria-current="true"] {
+  background: var(--accent-soft);
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.track-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.track-no {
+  flex: none;
+  width: 1.8em;
+  text-align: center;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+
+.track[aria-current="true"] .track-no {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.track-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.track-title {
+  overflow-wrap: anywhere;
+}
+
+.track[aria-current="true"] .track-title {
+  font-weight: 600;
+}
+
+.track-csv {
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.track-csv[data-has="false"] {
+  color: var(--busy);
+}
+
+.track-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-left: calc(1.8em + 10px);
+}
+
+.track-order {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.mini-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mini-btn:focus-within,
+.icon-btn:focus-visible,
+.track-main:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.icon-btn {
+  flex: none;
+  width: 38px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.player {
+  margin-top: 12px;
+}
+
+.tracks + .link {
+  margin-bottom: 8px;
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.transport .btn {
+  padding: 0 14px;
+}
+
+.now-playing {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 video.media {

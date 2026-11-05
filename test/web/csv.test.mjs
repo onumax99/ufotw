@@ -2,7 +2,7 @@
 // テスト用の CSV はここで作ったもの（市販作品の CSV はリポジトリに入れない）。
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseVorzeCsv, valueAt, activeRange, formatTime } from '../../web/js/csv.js';
+import { parseVorzeCsv, valueAt, activeRange, formatTime, formatRange } from '../../web/js/csv.js';
 import { packet, toHex } from '../../web/js/protocol.js';
 
 const SAMPLE = ['10,0,0,0,0', '100,0,40,0,40', '105,1,40,1,40', '110,1,0,1,0', '120,1,55,0,35', '130,0,0,0,0'].join('\n');
@@ -59,8 +59,11 @@ test('動きのある範囲', () => {
   const { events } = parseVorzeCsv(SAMPLE);
   assert.deepEqual(activeRange(events), { start: 10, end: 13 });
   assert.equal(activeRange(parseVorzeCsv('10,0,0,0,0').events), null);
-  // 最後まで動いたままなら最後の行の時刻
-  assert.deepEqual(activeRange(parseVorzeCsv('10,1,20,1,20\n50,1,30,1,30').events), { start: 1, end: 5 });
+  // 最後の行でも動いたままなら end は null（音声の終わりまで動く）
+  const open = activeRange(parseVorzeCsv('10,1,20,1,20\n50,1,30,1,30').events);
+  assert.deepEqual(open, { start: 1, end: null });
+  assert.equal(formatRange(open), '0:01〜最後まで');
+  assert.equal(formatRange({ start: 175.2, end: 438.8 }), '2:55〜7:18');
 });
 
 test('時刻の表示', () => {

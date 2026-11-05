@@ -10,13 +10,21 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）をスマ�
 
 - 2026-11-05 に作成。手動・パターン・停止・送信データ表示は iPhone アプリ版と同じ。
 - 同日、**実機（iPhone の Bluefy + U.F.O. TW）で動作に問題がないことをユーザーが確認済み**。ただし「正転」が実際にどちら向きか、アプリ切り替え時に本体が止まるか、画面ロック防止が Bluefy で効くかは、個別には聞いていない。
-- 同日、**音声同期モード**（Web 版のみ）を追加。音声・動画と U.F.O. TW 用の連動 CSV を選ぶと、`<audio>` / `<video>` の `currentTime` を時計にして CSV を引き、20Hz の周期で送る。PC の仮想機器とテストでは確認済みで、**実機での確認はまだ**。
+- 同日、**音声同期モード**（Web 版のみ）を追加。音声・動画と U.F.O. TW 用の連動 CSV を選ぶと、`<audio>` / `<video>` の `currentTime` を時計にして CSV を引き、20Hz の周期で送る。**実機（Bluefy）で 1 トラックの同期再生が問題ないことをユーザーが確認済み**。
+- 同日、音声同期に**プレイリスト**を追加（ユーザーの要望: 連続した複数トラックを再生したい、トラックごとに CSV があり、ない場合もある）。PC の仮想機器とテストでは確認済みで、**実機での確認はまだ**。
+  - トラックは名前の自然順（`Intl.Collator` numeric）で末尾に追加。終わったら次のトラックを自動再生。CSV のないトラックは停止のまま。
+  - CSV は名前（拡張子・空白・大文字小文字・全角半角を無視）が同じトラックに自動で付ける。CSV を 1 つだけ選び、CSV のないトラックも 1 つだけなら、名前が違っても組にする（ユーザーの手持ちの例では MP3 と CSV の名前がまったく違うため）。複数選んだときの余りは勝手に付けず、各トラックの「CSV」から選んでもらう。
+  - 次のトラックの自動再生は、同じ `<audio>` 要素の `src` を替えて `play()` する（iOS で一度ユーザー操作で再生した要素は続けて再生できる想定）。`play()` が拒否されたら「▶ を押すと再生します」と出す。実機で自動で次へ進むかは未確認。
   - CSV 形式: 1 行 = `時刻,左の向き,左の速度,右の向き,右の速度`。時刻は 0.1 秒単位、向き 1 = 正転（送信バイトの 0x80）、速度 0〜100（99 に丸める）。その時刻から次の行まで同じ値。3 列（初代 SA 用）は非対応でエラーにする。リンク先の Web CSV Player も時刻を `currentTime * 10` で照合しており、単位はこれで合っている。
   - ユーザーが持っている CSV・音声は市販作品なので、**リポジトリ（Public）には絶対に入れない**。テストの CSV は自作のものを使う。コミットメッセージにも作品名を書かない。
-  - 安全のため、停止ボタン・Esc・画面が隠れたとき・接続／切断・モード切り替え・ファイルの選び直しでは、音声も一時停止する（音声だけ進んで途中から動き出さないように）。
+  - 安全のため、停止ボタン・Esc・画面が隠れたとき・接続／切断・モード切り替え・再生中のトラックの CSV の付け替え・再生中のトラックの削除では、音声も一時停止する（音声だけ進んで途中から動き出さないように）。
 - GitHub Pages は 2026-11-05 に有効化済み（Source: GitHub Actions）。同日 https://onumax99.github.io/ufotw/ に公開し、公開版でも `?mock` で接続・送信・停止が動くことを確認した。
 - `web/` か `test/web/` を変えて main に push すると `.github/workflows/deploy-web.yml` がテスト → 公開する。
-- 手元での確認: `.claude/launch.json` の `web`（`python -m http.server 8123 --bind 127.0.0.1 --directory web`）を起動し、http://localhost:8123/?mock を開く。`?mock` で仮想機器（`web/js/mock.js`）につながり、`window.ufoMock.log` に送ったパケットが残る。`window.ufo` で `device` / `model` を触れる。
+- 手元での確認: `.claude/launch.json` の `web`（`python tools/dev-server.py 8123`。`Cache-Control: no-store` を付けるサーバー）を起動し、http://localhost:8123/?mock を開く。`?mock` で仮想機器（`web/js/mock.js`）につながり、`window.ufoMock.log` に送ったパケットが残る。`window.ufo` で `device` / `model` / `player` を触れる。
+  - `python -m http.server` だとブラウザが古い JS をキャッシュし、新旧のモジュールが混ざって「export がない」エラーで全体が動かなくなる（2026-11-05 に実際に起きた）。必ず `tools/dev-server.py` を使う。
+  - `app.js` は `?mock` のとき `await import()` するので、`window.ufo` はページの読み込み完了より少し後にできる。ブラウザで試すスクリプトは `window.ufo` ができるまで待ってから触る。
+  - 音声同期をブラウザで試すときは、ページ内で無音の WAV を `File` として作り、`ufo.player.addTracks()` / `ufo.player.addCsvs()` に渡す。`audio.muted = true` にすれば自動再生も通る。
+- 公開時のキャッシュ対策: GitHub Pages は JS を 10 分キャッシュさせるため、`deploy-web.yml` が公開前に `import` と `index.html` の JS・CSS の URL へ `?v=<コミット>` を付ける。相対 import は `from './xxx.js'` の形（と `import('./xxx.js')`）で書くこと。それ以外の書き方だと版が付かず、ワークフローがエラーで止まる。
 - テスト: `node --test test/web/*.test.mjs`。パケットは buttplug のテストデータと照合している。
 - iPhone の Bluefy は WebKit なので、Chrome だけの API や新しすぎる CSS は使わない。
 
@@ -56,11 +64,14 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）をスマ�
 | `web/js/device.js` | Web Bluetooth での接続・送信（`UFOTWController.swift` 相当） |
 | `web/js/control.js` | 20Hz で左右の速度を計算（`ControlModel.swift` 相当。音声同期モードは Web 版だけ） |
 | `web/js/csv.js` | 連動 CSV の読み込み・再生位置からの引き当て |
-| `web/js/app.js` | 画面のつなぎ込み、音声・CSV の読み込み、画面が隠れたら停止、画面ロック防止 |
+| `web/js/playlist.js` | プレイリストのデータ（並べ替え・CSV の割り当て・再生対象の追従）。DOM に触らない |
+| `web/js/player.js` | 音声同期の画面（`<audio>` / `<video>`、連続再生、前へ／次へ、トラックごとの CSV） |
+| `web/js/app.js` | 画面のつなぎ込み、画面が隠れたら停止、画面ロック防止 |
+| `tools/dev-server.py` | 手元確認用のキャッシュしないサーバー |
 | `web/js/mock.js` | テスト用の仮想機器 |
 | `test/web/*.test.mjs` | Web 版のテスト（Node.js 組み込みの `node:test`） |
 | `.github/workflows/deploy-web.yml` | Web 版をテストして GitHub Pages に公開 |
-| `.claude/launch.json` | ブラウザ確認用のローカルサーバー |
+| `.claude/launch.json` | ブラウザ確認用のローカルサーバー（`tools/dev-server.py` を起動） |
 | `Sources/UFOTWController.swift` | BLE のスキャン・接続・送信、パケット生成 |
 | `Sources/ControlModel.swift` | 手動／パターンの入力から 20Hz で左右の速度を計算して送る |
 | `Sources/ContentView.swift` | 画面（Form ベース） |
@@ -98,7 +109,7 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）をスマ�
 
 ユーザーとまだ決めていない。実装前に確認すること。（「動画・音楽に合わせて動かす」は 2026-11-05 に Web 版の音声同期モードとして実装済み）
 
-- 音声同期で、前回選んだ音声と CSV の組み合わせを覚えておく
+- 音声同期で、前回のプレイリスト（音声と CSV の組み合わせ）を覚えておく
 - 離れた場所から操作する
 - 自分でパターンを作って保存する
 - Bluefy 相当の自前アプリ（上記。必要になったら）

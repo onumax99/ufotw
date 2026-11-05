@@ -88,25 +88,35 @@
 
       <div class="file-row">
         <label class="btn file-btn">
-          音声・動画を選ぶ
-          <input id="media-file" class="visually-hidden" type="file"
+          トラックを追加
+          <input id="tracks-file" class="visually-hidden" type="file" multiple
                  accept="audio/*,video/*,.mp3,.m4a,.aac,.wav,.mp4,.m4v,.mov">
         </label>
-        <span id="media-name" class="file-name">未選択</span>
-      </div>
-      <div class="file-row">
-        <label class="btn file-btn">
-          CSV を選ぶ
-          <input id="csv-file" class="visually-hidden" type="file" accept=".csv,text/csv,text/plain">
+        <label id="csvs-label" class="btn file-btn">
+          CSV を追加
+          <input id="csvs-file" class="visually-hidden" type="file" multiple accept=".csv,text/csv,text/plain">
         </label>
-        <span id="csv-name" class="file-name">未選択</span>
       </div>
+      <p class="note">
+        どちらも複数まとめて選べます。トラックは名前順に並び、上から続けて再生します。
+        CSV は名前が同じトラックに自動で付きます。合わないときは各トラックの「CSV」から選んでください。
+      </p>
 
-      <p id="csv-info" class="note" hidden></p>
       <p id="sync-message" class="msg" role="status" hidden></p>
 
-      <audio id="audio" class="media" controls preload="metadata" hidden></audio>
-      <video id="video" class="media" controls playsinline preload="metadata" hidden></video>
+      <div id="player" class="player" hidden>
+        <audio id="audio" class="media" controls preload="metadata" hidden></audio>
+        <video id="video" class="media" controls playsinline preload="metadata" hidden></video>
+        <div class="transport">
+          <button id="prev-btn" class="btn" type="button" aria-label="前のトラック">‹ 前へ</button>
+          <span id="now-playing" class="now-playing"></span>
+          <button id="next-btn" class="btn" type="button" aria-label="次のトラック">次へ ›</button>
+        </div>
+        <p id="csv-info" class="note" hidden></p>
+      </div>
+
+      <ol id="track-list" class="tracks" hidden></ol>
+      <button id="clear-tracks" class="link" type="button" hidden>プレイリストを空にする</button>
 
       <div class="slider">
         <div class="slider-head"><label for="offset">動きのタイミング</label><output id="offset-label" for="offset">ずらしなし</output></div>

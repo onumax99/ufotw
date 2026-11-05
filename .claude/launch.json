@@ -4,7 +4,7 @@
     {
       "name": "web",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8123", "--bind", "127.0.0.1", "--directory", "web"],
+      "runtimeArgs": ["tools/dev-server.py", "8123"],
       "port": 8123
     }
   ]

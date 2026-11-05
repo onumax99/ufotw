@@ -60,7 +60,10 @@ export function valueAt(events, t) {
   return found < 0 ? [0, 0] : [events[found].left, events[found].right];
 }
 
-/** 実際に動いている範囲 { start, end }（秒）。最後まで動いたままなら end は最後の行の時刻。動きがなければ null */
+/**
+ * 実際に動いている範囲 { start, end }（秒）。動きがなければ null。
+ * 最後の行でも動いたまま（音声の終わりまで動き続ける）なら end は null。
+ */
 export function activeRange(events) {
   const moving = (e) => e.left !== 0 || e.right !== 0;
   const first = events.findIndex(moving);
@@ -68,7 +71,12 @@ export function activeRange(events) {
   let last = events.length - 1;
   while (!moving(events[last])) last--;
   const after = events[last + 1];
-  return { start: events[first].t, end: after ? after.t : events[last].t };
+  return { start: events[first].t, end: after ? after.t : null };
+}
+
+/** 範囲の表示: 「2:55〜7:18」「2:55〜最後まで」 */
+export function formatRange(range) {
+  return `${formatTime(range.start)}〜${range.end === null ? '最後まで' : formatTime(range.end)}`;
 }
 
 /** 秒を「m:ss」に */
