@@ -8,7 +8,8 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）をスマ�
 
 ## Web 版の現在の状態と開発
 
-- 2026-11-05 に作成。手動・パターン・停止・送信データ表示は iPhone アプリ版と同じ。PC の仮想機器（`?mock`）とテストでの確認のみで、**実機（Bluefy + U.F.O. TW）での確認はまだ**。
+- 2026-11-05 に作成。手動・パターン・停止・送信データ表示は iPhone アプリ版と同じ。
+- 同日、**実機（iPhone の Bluefy + U.F.O. TW）で動作に問題がないことをユーザーが確認済み**。ただし「正転」が実際にどちら向きか、アプリ切り替え時に本体が止まるか、画面ロック防止が Bluefy で効くかは、個別には聞いていない。
 - GitHub Pages は 2026-11-05 に有効化済み（Source: GitHub Actions）。同日 https://onumax99.github.io/ufotw/ に公開し、公開版でも `?mock` で接続・送信・停止が動くことを確認した。
 - `web/` か `test/web/` を変えて main に push すると `.github/workflows/deploy-web.yml` がテスト → 公開する。
 - 手元での確認: `.claude/launch.json` の `web`（`python -m http.server 8123 --bind 127.0.0.1 --directory web`）を起動し、http://localhost:8123/?mock を開く。`?mock` で仮想機器（`web/js/mock.js`）につながり、`window.ufoMock.log` に送ったパケットが残る。`window.ufo` で `device` / `model` を触れる。
