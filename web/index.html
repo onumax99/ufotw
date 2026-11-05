@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light dark">
+  <title>UFO TW</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1>UFO TW</h1>
+      <span class="sub">Web 版</span>
+    </header>
+
+    <p id="mock-banner" class="banner info" hidden>
+      テスト用の仮想機器につながります（実機には何も送りません）。URL の <code>?mock</code> を外すと通常に戻ります。
+    </p>
+    <p id="unsupported-banner" class="banner warn" hidden></p>
+
+    <section class="card" aria-labelledby="h-connection">
+      <h2 id="h-connection">接続</h2>
+      <div class="row">
+        <span id="status-dot" class="dot" aria-hidden="true"></span>
+        <span id="status-text" class="grow">未接続</span>
+        <button id="connect-btn" class="btn" type="button">探す</button>
+      </div>
+      <p id="message" class="msg" role="status" hidden></p>
+      <button id="show-all-btn" class="link" type="button">一覧に出ないときは、すべての機器から選ぶ</button>
+    </section>
+
+    <div class="segmented" role="group" aria-label="モード">
+      <button type="button" data-mode="manual">手動</button>
+      <button type="button" data-mode="pattern">パターン</button>
+    </div>
+
+    <section id="manual-section" class="card" aria-labelledby="h-manual">
+      <h2 id="h-manual">手動</h2>
+      <label class="switch-row">
+        <span>左右を連動</span>
+        <input id="linked" class="switch" type="checkbox">
+      </label>
+
+      <div class="slider">
+        <div class="slider-head"><label for="left">左</label><output id="left-label" for="left">停止</output></div>
+        <input id="left" class="bipolar" type="range" min="-99" max="99" step="1" value="0">
+        <div class="scale" aria-hidden="true"><span>逆転</span><span>停止</span><span>正転</span></div>
+      </div>
+
+      <div class="slider">
+        <div class="slider-head"><label for="right">右</label><output id="right-label" for="right">停止</output></div>
+        <input id="right" class="bipolar" type="range" min="-99" max="99" step="1" value="0">
+        <div class="scale" aria-hidden="true"><span>逆転</span><span>停止</span><span>正転</span></div>
+      </div>
+
+      <button id="zero-btn" class="btn" type="button">0 に戻す</button>
+      <p class="note">中央が停止、右側が正転、左側が逆転です。</p>
+    </section>
+
+    <section id="pattern-section" class="card" aria-labelledby="h-pattern" hidden>
+      <h2 id="h-pattern">パターン</h2>
+      <div id="pattern-chips" class="chips" role="radiogroup" aria-label="種類"></div>
+
+      <div class="slider">
+        <div class="slider-head"><label for="intensity">強さ</label><output id="intensity-label" for="intensity">60</output></div>
+        <input id="intensity" type="range" min="0" max="99" step="1" value="60">
+      </div>
+
+      <div class="slider">
+        <div class="slider-head"><label for="period">周期</label><output id="period-label" for="period">2.0 秒</output></div>
+        <input id="period" type="range" min="0.5" max="8" step="0.1" value="2">
+      </div>
+
+      <label class="switch-row">
+        <span>右を逆回転にする</span>
+        <input id="mirror" class="switch" type="checkbox">
+      </label>
+
+      <button id="play-btn" class="btn primary wide" type="button">再生</button>
+    </section>
+
+    <section class="card" aria-labelledby="h-output">
+      <h2 id="h-output">出力</h2>
+      <dl class="kv">
+        <dt>左</dt><dd id="out-left">停止</dd>
+        <dt>右</dt><dd id="out-right">停止</dd>
+        <dt>送信データ</dt><dd id="packet" class="mono">-</dd>
+        <dt>画面ロック防止</dt><dd id="wake-lock">-</dd>
+      </dl>
+    </section>
+
+    <p class="note foot">
+      アプリを切り替えたり画面を閉じたりすると停止します。Esc キーでも停止できます（PC）。
+    </p>
+  </main>
+
+  <div class="stopbar">
+    <button id="stop-btn" class="stop" type="button">停止</button>
+  </div>
+</body>
+</html>

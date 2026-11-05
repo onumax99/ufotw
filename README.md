@@ -1,17 +1,46 @@
-# UFOController（Vorze U.F.O. TW 用 iPhone アプリ）
+# UFOController（Vorze U.F.O. TW 操作アプリ）
 
-SwiftUI と CoreBluetooth だけで作った、U.F.O. TW をスマホから操作するための最小構成のアプリです。外部ライブラリは使っていません。
+U.F.O. TW をスマホから操作するための最小構成のアプリです。外部ライブラリは使っていません。機能が同じ 2 つの版があります。
+
+- **Web 版**（`web/`）: ブラウザで開くだけ。iPhone では Bluefy、PC では Chrome か Edge で使う。https://onumax99.github.io/ufotw/
+- **iPhone アプリ版**（`Sources/`）: SwiftUI + CoreBluetooth。GitHub Actions でビルドして Sideloadly で入れる
 
 ## できること
 
-- U.F.O. TW を探して自動で接続（BLE 名が `UFO-` / `UFO ` で始まる機器）
+- U.F.O. TW を探して接続（BLE 名が `UFO-` / `UFO ` で始まる機器。Web 版は表示される一覧から選ぶ）
 - **手動モード**：左右それぞれの回転速度と向きをスライダーで操作（-99〜99、中央が停止）。左右の連動も可能
 - **パターンモード**：一定／ウェーブ／交互反転／パルス／ランダム。強さ・周期・左右逆回転を調整可能
 - 画面下の大きな **停止ボタン**
-- アプリがバックグラウンドに入ると自動で停止
+- アプリの切り替えや画面ロックで自動で停止
 - 送信中のバイト列を画面に表示（デバッグ用）
 
-## 必要なもの
+## Web 版の使い方
+
+### iPhone
+
+1. App Store から **Bluefy（Web BLE Browser）** を入れる。Safari や iPhone 版の Chrome は Bluetooth を使えないので、このページは動きません
+2. Bluefy で https://onumax99.github.io/ufotw/ を開く（ブックマークしておくと楽）
+3. U.F.O. TW をクレードルから外して電源を入れ、**探す** → 一覧の `UFO-…` を選ぶ
+4. 初回は Bluefy が Bluetooth の使用許可を求めるので許可する
+
+### PC（Windows）
+
+- Chrome か Edge で同じ URL を開く。PC の Bluetooth はオンにしておく
+
+### 注意
+
+- アプリを切り替えたり画面がロックされたりしてページが隠れると、停止パケットを送る。ただし、ブラウザがすぐに処理を止めると届かない可能性がある（実機で要確認）
+- 画面ロック防止に対応したブラウザなら、接続中は自動ロックしない。対応しているかは画面の「出力 → 画面ロック防止」に出る
+- 一覧に出ないときは「すべての機器から選ぶ」を使う。U.F.O. TW 以外（初代の UFOSA など）を選んでも接続しない
+
+### 開発
+
+- `web/` を編集して main に push すると、`.github/workflows/deploy-web.yml` がテストしてから GitHub Pages に公開する
+- 初回だけ、GitHub のリポジトリの **Settings → Pages → Build and deployment → Source** を **GitHub Actions** にする
+- 手元で確かめる: `python -m http.server 8123 --bind 127.0.0.1 --directory web` を実行して http://localhost:8123/?mock を開く。`?mock` を付けると仮想機器につながり、実機には何も送らない。外せば PC の Chrome / Edge から実機につながる
+- テスト: `node --test test/web/*.test.mjs`（Node.js 22 以降）
+
+## iPhone アプリ版で必要なもの
 
 - GitHub のアカウント（ビルドは GitHub Actions の macOS ランナーで行うので、手元に Mac も Xcode も不要。Windows でも Mac でも同じ）
 - 実機の iPhone（iOS 16 以降。シミュレータは Bluetooth を使えません）
@@ -28,7 +57,7 @@ SwiftUI と CoreBluetooth だけで作った、U.F.O. TW をスマホから操�
 
 ### ビルドしてインストールする
 
-1. GitHub に push すると `.github/workflows/build-ipa.yml` が走り、未署名の IPA ができます（main への push と、Actions 画面の **Run workflow** で実行）
+1. `Sources/` か `project.yml` を変えて main に push すると `.github/workflows/build-ipa.yml` が走り、未署名の IPA ができます（Actions 画面の **Run workflow** からも実行できる）
 2. GitHub の **Actions** → 該当の実行 → **Artifacts** から `UFOController-unsigned-ipa` をダウンロードして zip を展開し、中の `.ipa` を取り出す
 3. Sideloadly を起動し、iPhone を USB でつなぐ
 4. Sideloadly に `.ipa` をドラッグ → **iDevice** に自分の iPhone が出ていることを確認 → **Apple account** に Apple ID を入れて **Start**（パスワードは Apple に直接送られる。2 ファクタ認証のコードを聞かれたら iPhone に出た番号を入れる）
@@ -76,10 +105,17 @@ open UFOController.xcodeproj
 
 | ファイル | 役割 |
 |---|---|
-| `UFOTWController.swift` | BLE のスキャン・接続・送信。パケット生成もここ |
-| `ControlModel.swift` | 手動・パターンの値から 20Hz で左右の速度を計算 |
-| `ContentView.swift` | 画面 |
-| `UFOControllerApp.swift` | エントリーポイント |
+| `web/index.html`・`web/style.css` | Web 版の画面 |
+| `web/js/protocol.js` | パケット生成（UUID・バイト列） |
+| `web/js/device.js` | Web Bluetooth での接続・送信 |
+| `web/js/control.js` | 手動・パターンの値から 20Hz で左右の速度を計算 |
+| `web/js/app.js` | 画面と上の 2 つをつなぐ |
+| `web/js/mock.js` | テスト用の仮想機器（`?mock`） |
+| `test/web/` | Web 版のテスト |
+| `Sources/UFOTWController.swift` | iPhone アプリ版の BLE のスキャン・接続・送信。パケット生成もここ |
+| `Sources/ControlModel.swift` | iPhone アプリ版の速度計算 |
+| `Sources/ContentView.swift` | iPhone アプリ版の画面 |
+| `Sources/UFOControllerApp.swift` | iPhone アプリ版のエントリーポイント |
 
 ## プロトコルのメモ
 

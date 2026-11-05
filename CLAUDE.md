@@ -1,8 +1,21 @@
-# ufotw — Vorze U.F.O. TW 用 iPhone アプリ
+# ufotw — Vorze U.F.O. TW 操作アプリ（Web 版と iPhone アプリ版）
 
-Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）を iPhone から操作する個人用アプリ。SwiftUI + CoreBluetooth のみで、外部ライブラリは使っていない。
+Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）をスマホから操作する個人用アプリ。外部ライブラリは使っていない。
 
-## 現在の状態
+- **Web 版**（`web/`）: 素の HTML / CSS / JavaScript（ES modules、ビルド工程なし）+ Web Bluetooth。iPhone では **Bluefy** で開く前提（Safari は Web Bluetooth 非対応で、Apple も対応予定なし）。PC は Chrome / Edge。GitHub Pages（https://onumax99.github.io/ufotw/ ）で公開。**まずはこちらを Bluefy 前提で進める**（2026-11-05 のユーザーの方針。無料 Apple ID の 7 日ごとの入れ直しは許容済み）。
+- **iPhone アプリ版**（`Sources/`）: SwiftUI + CoreBluetooth。
+- 必要になったら、Bluefy の代わりに自前のアプリ（WKWebView で Web 版を表示し、CoreBluetooth への橋渡しをする）を作る予定。まだ着手していない。
+
+## Web 版の現在の状態と開発
+
+- 2026-11-05 に作成。手動・パターン・停止・送信データ表示は iPhone アプリ版と同じ。PC の仮想機器（`?mock`）とテストでの確認のみで、**実機（Bluefy + U.F.O. TW）での確認はまだ**。
+- GitHub Pages の公開には、リポジトリの Settings → Pages → Source を「GitHub Actions」にする必要がある（ユーザーが行う）。
+- `web/` か `test/web/` を変えて main に push すると `.github/workflows/deploy-web.yml` がテスト → 公開する。
+- 手元での確認: `.claude/launch.json` の `web`（`python -m http.server 8123 --bind 127.0.0.1 --directory web`）を起動し、http://localhost:8123/?mock を開く。`?mock` で仮想機器（`web/js/mock.js`）につながり、`window.ufoMock.log` に送ったパケットが残る。`window.ufo` で `device` / `model` を触れる。
+- テスト: `node --test test/web/*.test.mjs`。パケットは buttplug のテストデータと照合している。
+- iPhone の Bluefy は WebKit なので、Chrome だけの API や新しすぎる CSS は使わない。
+
+## iPhone アプリ版の現在の状態
 
 - **開発環境は Windows PC**（2026-11-05 に移行）。手元に Xcode も Swift コンパイラもないので、**ビルドはすべて GitHub Actions で行う**。コンパイルエラーは push して Actions の結果を見るまで分からない。
 - リポジトリは https://github.com/onumax99/ufotw （Public）。Public なので macOS ランナーの利用に上限はない。
@@ -13,9 +26,9 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）を iPhone 
 - deployment target は iOS 16.0。iOS 17 以降専用の API（`onChange(of:) { old, new in }` の 2 引数形式、`@Observable` など）は使わない。Swift 5 モード。
 - 以前の開発機だった MacBook Pro 2016（macOS 12.7.6、Xcode 14.2 が上限、iOS 27 の実機には入れられない）はもう使わない。Mac で作業する場合の手順は README の末尾に残してある。
 
-## ビルドと動作確認（Windows）
+## iPhone アプリ版のビルドと動作確認（Windows）
 
-1. `Sources/` を編集して main に push する（または Actions 画面の **Run workflow**）。`.github/workflows/build-ipa.yml` が走る。
+1. `Sources/` を編集して main に push する（または Actions 画面の **Run workflow**）。`.github/workflows/build-ipa.yml` が走る（`Sources/`・`project.yml`・ワークフロー自体が変わったときだけ）。
 2. https://github.com/onumax99/ufotw/actions で結果を見る。失敗したらジョブのログ（サインインが必要）の「署名なしでビルド」ステップにコンパイルエラーが出る。
 3. 成功したら Artifacts の `UFOController-unsigned-ipa`（zip）を取り、中の `.ipa` を Sideloadly で iPhone に入れる。
 
@@ -33,6 +46,15 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）を iPhone 
 
 | ファイル | 役割 |
 |---|---|
+| `web/index.html`・`web/style.css` | Web 版の画面 |
+| `web/js/protocol.js` | パケット生成・UUID・名前判定（`UFOTWController.swift` の静的メソッド相当） |
+| `web/js/device.js` | Web Bluetooth での接続・送信（`UFOTWController.swift` 相当） |
+| `web/js/control.js` | 20Hz で左右の速度を計算（`ControlModel.swift` 相当） |
+| `web/js/app.js` | 画面のつなぎ込み、画面が隠れたら停止、画面ロック防止 |
+| `web/js/mock.js` | テスト用の仮想機器 |
+| `test/web/*.test.mjs` | Web 版のテスト（Node.js 組み込みの `node:test`） |
+| `.github/workflows/deploy-web.yml` | Web 版をテストして GitHub Pages に公開 |
+| `.claude/launch.json` | ブラウザ確認用のローカルサーバー |
 | `Sources/UFOTWController.swift` | BLE のスキャン・接続・送信、パケット生成 |
 | `Sources/ControlModel.swift` | 手動／パターンの入力から 20Hz で左右の速度を計算して送る |
 | `Sources/ContentView.swift` | 画面（Form ベース） |
@@ -59,6 +81,12 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）を iPhone 
 - 安全のため、接続・切断のたびに出力をゼロに戻し、接続直後に停止パケットを送る。アプリがバックグラウンドに入ったら停止する。切断時は停止を送ってから 0.3 秒後に切断する。
 - 並行性チェックで揉めないよう、遅延実行は `perform(_:with:afterDelay:)`、Timer はセレクタ方式にしている。Swift 5 モード。
 - UI の文言は日本語。
+- Web 版も上の送信ルール・安全のルールは同じ。違いは次のとおり。
+  - 機器の選択は Web Bluetooth の選択画面で行う（`requestDevice` はボタン操作の中からしか呼べない）。通常は名前（`UFO-` / `UFO `）で絞り、「すべての機器から選ぶ」ではサービス UUID で絞って名前を後から確かめる。
+  - バックグラウンドの代わりに `visibilitychange`（hidden）と `pagehide` で停止する。
+  - 切断は 0.3 秒固定ではなく、停止パケットの書き込み完了を待って（最大 1 秒）から切る。
+  - 対応ブラウザでは接続中に Screen Wake Lock を取り、自動ロックで止まらないようにする。
+- 送信ルールや計算を変えるときは、Web 版と iPhone アプリ版の両方をそろえる（片方だけ変えるならその旨を書いておく）。
 
 ## 追加機能の候補（未決定）
 
@@ -67,3 +95,4 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）を iPhone 
 - 動画・音楽に合わせて動かす
 - 離れた場所から操作する
 - 自分でパターンを作って保存する
+- Bluefy 相当の自前アプリ（上記。必要になったら）

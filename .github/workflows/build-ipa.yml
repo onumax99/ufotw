@@ -6,6 +6,11 @@ name: Build IPA
 on:
   push:
     branches: [main]
+    # Web 版やドキュメントだけの変更ではビルドしない
+    paths:
+      - "Sources/**"
+      - "project.yml"
+      - ".github/workflows/build-ipa.yml"
   workflow_dispatch:
 
 jobs:
