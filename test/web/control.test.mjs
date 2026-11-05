@@ -95,6 +95,39 @@ test('モードを切り替えると出力をゼロに戻す', () => {
   assert.deepEqual(device.sent.at(-1), [0, 0]);
 });
 
+test('音声同期: 取り出し口の値を送り、なければ 0', () => {
+  const device = fakeDevice();
+  const model = new ControlModel(device);
+  model.setMode('sync');
+  model.tick();
+  assert.deepEqual(device.sent.at(-1), [0, 0]);
+
+  let value = [40, -35];
+  model.setSyncSource(() => value);
+  model.tick();
+  assert.deepEqual(device.sent.at(-1), [40, -35]);
+  assert.deepEqual([model.outLeft, model.outRight], [40, -35]);
+
+  value = [150, -150]; // 範囲外は丸める
+  model.tick();
+  assert.deepEqual(device.sent.at(-1), [99, -99]);
+
+  // 手動に戻したら取り出し口は使わない
+  model.setMode('manual');
+  model.tick();
+  assert.deepEqual(device.sent.at(-1), [0, 0]);
+});
+
+test('音声同期: タイミング調整は ±1 秒、0.01 秒単位', () => {
+  const model = new ControlModel(fakeDevice());
+  model.setSyncOffset('0.25');
+  assert.equal(model.syncOffset, 0.25);
+  model.setSyncOffset(-3);
+  assert.equal(model.syncOffset, -1);
+  model.setSyncOffset(0.1 + 0.2);
+  assert.equal(model.syncOffset, 0.3);
+});
+
 test('停止ボタンは出力を戻してから停止を送る', () => {
   const device = fakeDevice();
   const model = new ControlModel(device);

@@ -447,6 +447,65 @@ input[type="range"]:focus-visible {
   font-weight: 600;
 }
 
+/* ---- 音声同期 ---- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+  opacity: 0;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+}
+
+.file-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.file-btn:focus-within {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.file-name[data-selected="true"] {
+  color: var(--text);
+}
+
+.media {
+  display: block;
+  width: 100%;
+  margin: 10px 0 4px;
+}
+
+video.media {
+  max-height: 40vh;
+  border-radius: 10px;
+  background: #000;
+}
+
 /* ---- 出力 ---- */
 
 .kv {

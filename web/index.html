@@ -35,6 +35,7 @@
     <div class="segmented" role="group" aria-label="モード">
       <button type="button" data-mode="manual">手動</button>
       <button type="button" data-mode="pattern">パターン</button>
+      <button type="button" data-mode="sync">音声同期</button>
     </div>
 
     <section id="manual-section" class="card" aria-labelledby="h-manual">
@@ -82,6 +83,42 @@
       <button id="play-btn" class="btn primary wide" type="button">再生</button>
     </section>
 
+    <section id="sync-section" class="card" aria-labelledby="h-sync" hidden>
+      <h2 id="h-sync">音声同期</h2>
+
+      <div class="file-row">
+        <label class="btn file-btn">
+          音声・動画を選ぶ
+          <input id="media-file" class="visually-hidden" type="file"
+                 accept="audio/*,video/*,.mp3,.m4a,.aac,.wav,.mp4,.m4v,.mov">
+        </label>
+        <span id="media-name" class="file-name">未選択</span>
+      </div>
+      <div class="file-row">
+        <label class="btn file-btn">
+          CSV を選ぶ
+          <input id="csv-file" class="visually-hidden" type="file" accept=".csv,text/csv,text/plain">
+        </label>
+        <span id="csv-name" class="file-name">未選択</span>
+      </div>
+
+      <p id="csv-info" class="note" hidden></p>
+      <p id="sync-message" class="msg" role="status" hidden></p>
+
+      <audio id="audio" class="media" controls preload="metadata" hidden></audio>
+      <video id="video" class="media" controls playsinline preload="metadata" hidden></video>
+
+      <div class="slider">
+        <div class="slider-head"><label for="offset">動きのタイミング</label><output id="offset-label" for="offset">ずらしなし</output></div>
+        <input id="offset" class="bipolar" type="range" min="-1" max="1" step="0.05" value="0">
+        <div class="scale" aria-hidden="true"><span>遅く</span><span>なし</span><span>早く</span></div>
+      </div>
+      <p class="note">
+        音より動きが遅れるときは「早く」、Bluetooth イヤホンなどで音が遅れて聞こえるときは「遅く」に動かします。
+        再生中は画面をつけたままにしてください。画面が消えたり停止ボタンを押したりすると、音声も一時停止します。
+      </p>
+    </section>
+
     <section class="card" aria-labelledby="h-output">
       <h2 id="h-output">出力</h2>
       <dl class="kv">
@@ -93,7 +130,8 @@
     </section>
 
     <p class="note foot">
-      アプリを切り替えたり画面を閉じたりすると停止します。Esc キーでも停止できます（PC）。
+      アプリを切り替えたり画面を閉じたりすると停止します（音声同期では音声も一時停止）。Esc キーでも停止できます（PC）。
+      選んだ音声や CSV はこの端末のブラウザの中だけで読み込み、どこにも送信しません。
     </p>
   </main>
 

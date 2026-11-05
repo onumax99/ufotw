@@ -93,6 +93,9 @@ export class ControlModel extends EventTarget {
     this.period = 2.0; // 1 周期の秒数
     this.mirror = false; // 右を左と逆回転にする
     this.playing = false;
+    // 音声同期
+    this.syncOffset = 0; // 秒。正 = CSV の動きを早める、負 = 遅らせる
+    this._syncSource = null; // () => [左, 右]。再生中の音声と CSV から今の値を返す（app.js が設定）
     // 実際に送っている値（表示用）
     this.outLeft = 0;
     this.outRight = 0;
@@ -166,6 +169,17 @@ export class ControlModel extends EventTarget {
     this._changed();
   }
 
+  /** 音声同期モードで使う値の取り出し口。音声が止まっているときは [0, 0] を返すこと */
+  setSyncSource(source) {
+    this._syncSource = source;
+  }
+
+  setSyncOffset(seconds) {
+    const value = Math.round((Number(seconds) || 0) * 100) / 100;
+    this.syncOffset = Math.max(-1, Math.min(1, value));
+    this._changed();
+  }
+
   togglePlay() {
     this.playing = !this.playing;
     this._startTime = this.now();
@@ -197,6 +211,9 @@ export class ControlModel extends EventTarget {
     let output;
     if (this.mode === 'manual') {
       output = [this.left, this.right];
+    } else if (this.mode === 'sync') {
+      const value = this._syncSource ? this._syncSource() : null;
+      output = value ? [clamp(value[0]), clamp(value[1])] : [0, 0];
     } else if (!this.playing) {
       output = [0, 0];
     } else {
