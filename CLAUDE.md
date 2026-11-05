@@ -9,7 +9,7 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）をスマ�
 ## Web 版の現在の状態と開発
 
 - 2026-11-05 に作成。手動・パターン・停止・送信データ表示は iPhone アプリ版と同じ。PC の仮想機器（`?mock`）とテストでの確認のみで、**実機（Bluefy + U.F.O. TW）での確認はまだ**。
-- GitHub Pages の公開には、リポジトリの Settings → Pages → Source を「GitHub Actions」にする必要がある（ユーザーが行う）。
+- GitHub Pages は 2026-11-05 に有効化済み（Source: GitHub Actions）。同日 https://onumax99.github.io/ufotw/ に公開し、公開版でも `?mock` で接続・送信・停止が動くことを確認した。
 - `web/` か `test/web/` を変えて main に push すると `.github/workflows/deploy-web.yml` がテスト → 公開する。
 - 手元での確認: `.claude/launch.json` の `web`（`python -m http.server 8123 --bind 127.0.0.1 --directory web`）を起動し、http://localhost:8123/?mock を開く。`?mock` で仮想機器（`web/js/mock.js`）につながり、`window.ufoMock.log` に送ったパケットが残る。`window.ufo` で `device` / `model` を触れる。
 - テスト: `node --test test/web/*.test.mjs`。パケットは buttplug のテストデータと照合している。
@@ -32,9 +32,9 @@ Vorze の U.F.O. TW（左右 2 つの回転部を持つ BLE 機器）をスマ�
 2. https://github.com/onumax99/ufotw/actions で結果を見る。失敗したらジョブのログ（サインインが必要）の「署名なしでビルド」ステップにコンパイルエラーが出る。
 3. 成功したら Artifacts の `UFOController-unsigned-ipa`（zip）を取り、中の `.ipa` を Sideloadly で iPhone に入れる。
 
-- Claude Code からは、ログインしていない状態では Actions のログは読めない。ジョブの成否とステップ一覧は公開 API で取れる:
-  `curl -s https://api.github.com/repos/onumax99/ufotw/actions/runs?per_page=3` → run の `id`、`status`、`conclusion`。
-  エラー内容が必要なときはユーザーにログの該当部分を貼ってもらう。
+- GitHub CLI（`gh`）が入っていて、onumax99 でログイン済み（2026-11-05）。Actions の結果やエラーは `gh run list` / `gh run view <id> --log-failed` で読める。再実行は `gh run rerun <id> --failed`、公開の手動実行は `gh workflow run deploy-web.yml`。
+  - Claude Code の Bash で `gh` が見つからないときは `"/c/Program Files/GitHub CLI/gh"` をフルパスで使う（インストール直後のセッションでは PATH に入っていないことがある）。
+  - `gh` が使えないときは、公開 API で成否だけ取れる: `curl -s https://api.github.com/repos/onumax99/ufotw/actions/runs?per_page=3`。
 - 1 回のビルドは 1 分弱。細かく push して確かめてよい。
 - `.xcodeproj` は CI 上で project.yml から生成するので git 管理外。ビルド設定・Info.plist の項目は **project.yml** に書く。
 - ファイルを追加・削除しても `sources: - Sources` でディレクトリごと拾うので、project.yml の変更は不要。
